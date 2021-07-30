@@ -1,1 +1,1 @@
-# Pthfinding-visualizer
+# Pathfinding-visualizer
