@@ -1,7 +1,8 @@
 import pygame
+from queue import PriorityQueue
 
 pygame.init()
-from queue import PriorityQueue
+
 
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 18)
@@ -10,7 +11,7 @@ width = 600
 rows = 30
 grid = []
 win = pygame.display.set_mode((778, 600))
-pygame.display.set_caption("Visualizing Path Finding Algorithms")
+pygame.display.set_caption("Path Finding Visualizer")
 path_color = (50, 90, 195)
 back_color = (200, 200, 200)
 wall_color = (40, 40, 40)
@@ -62,16 +63,20 @@ class Node:
     def update_neighbours(self):
         self.neighbours = []
 
-        if self.row < self.total_rows - 1 and not grid[self.row + 1][self.col].is_wall():  # down
+        # down
+        if self.row < self.total_rows - 1 and not grid[self.row + 1][self.col].is_wall():  
             self.neighbours.append(grid[self.row + 1][self.col])
 
-        if self.row > 0 and not grid[self.row - 1][self.col].is_wall():  # up
+        # up
+        if self.row > 0 and not grid[self.row - 1][self.col].is_wall():  
             self.neighbours.append(grid[self.row - 1][self.col])
 
-        if self.col < self.total_rows - 1 and not grid[self.row][self.col + 1].is_wall():  # right
+        # right
+        if self.col < self.total_rows - 1 and not grid[self.row][self.col + 1].is_wall():  
             self.neighbours.append(grid[self.row][self.col + 1])
 
-        if self.col > 0 and not grid[self.row][self.col - 1].is_wall():  # left
+        # left
+        if self.col > 0 and not grid[self.row][self.col - 1].is_wall():  
             self.neighbours.append(grid[self.row][self.col - 1])
 
 
@@ -134,6 +139,7 @@ def findPath(start, end):
 
     return False
 
+
 def findPathDijkstra(start, end):
     count = 0
     open_set = PriorityQueue()
@@ -175,6 +181,7 @@ def findPathDijkstra(start, end):
             current.make_visited()
 
     return False
+
 
 def make_grid():
     space = width // rows
@@ -281,7 +288,6 @@ def main():
                             for node in row:
                                 node.reset()
 
-
             elif pygame.mouse.get_pressed()[2]:  # right click on a node
                 pos = pygame.mouse.get_pos()
                 y, x = pos
@@ -296,6 +302,5 @@ def main():
                     end = None
 
     pygame.quit()
-
 
 main()
