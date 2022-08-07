@@ -1,8 +1,7 @@
 import pygame
-from queue import PriorityQueue
-
+import math
 pygame.init()
-
+from queue import PriorityQueue
 
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 18)
@@ -11,7 +10,7 @@ width = 600
 rows = 30
 grid = []
 win = pygame.display.set_mode((778, 600))
-pygame.display.set_caption("Path Finding Visualizer")
+pygame.display.set_caption("A* Path Finding Algorithm")
 path_color = (50, 90, 195)
 back_color = (200, 200, 200)
 wall_color = (40, 40, 40)
@@ -63,27 +62,36 @@ class Node:
     def update_neighbours(self):
         self.neighbours = []
 
-        # down
-        if self.row < self.total_rows - 1 and not grid[self.row + 1][self.col].is_wall():  
+        if self.row < self.total_rows - 1 and not grid[self.row + 1][self.col].is_wall():  # down
             self.neighbours.append(grid[self.row + 1][self.col])
 
-        # up
-        if self.row > 0 and not grid[self.row - 1][self.col].is_wall():  
+        if self.row > 0 and not grid[self.row - 1][self.col].is_wall():  # up
             self.neighbours.append(grid[self.row - 1][self.col])
 
-        # right
-        if self.col < self.total_rows - 1 and not grid[self.row][self.col + 1].is_wall():  
+        if self.col < self.total_rows - 1 and not grid[self.row][self.col + 1].is_wall():  # right
             self.neighbours.append(grid[self.row][self.col + 1])
 
-        # left
-        if self.col > 0 and not grid[self.row][self.col - 1].is_wall():  
+        if self.col > 0 and not grid[self.row][self.col - 1].is_wall():  # left
             self.neighbours.append(grid[self.row][self.col - 1])
+
+        if self.row < self.total_rows - 1 and self.col > 0 and not grid[self.row + 1][self.col-1].is_wall():  # down-left
+            self.neighbours.append(grid[self.row + 1][self.col-1])
+
+        if self.row < self.total_rows - 1 and self.col < self.total_rows - 1  and not grid[self.row + 1][self.col+1].is_wall():  # down-right
+            self.neighbours.append(grid[self.row + 1][self.col+1])
+
+        if self.row >0 and self.col > 0 and not grid[self.row - 1][self.col - 1].is_wall():  # up-left
+            self.neighbours.append(grid[self.row - 1][self.col - 1])
+
+        if self.row >0 and self.col < self.total_rows - 1 and not grid[self.row - 1][self.col + 1].is_wall():  # up-right
+            self.neighbours.append(grid[self.row - 1][self.col + 1])
 
 
 def h(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
-    return abs(x1 - x2) + abs(y1 - y2)
+    ans= math.sqrt((x1-x2)**2 + (y1-y2)**2)
+    return math.ceil(ans)
 
 
 def reconstruct_path(came_from, current):
@@ -119,6 +127,7 @@ def findPath(start, end):
         if current == end:
             end.make_end()
             reconstruct_path(came_from, end)
+            start.make_start()
             return True
 
         for neighbour in current.neighbours:
@@ -132,13 +141,13 @@ def findPath(start, end):
                     count += 1
                     open_set.put((f[neighbour], count, neighbour))
                     open_set_hash.add(neighbour)
+                    neighbour.make_unvisited()
 
         draw()
         if current != start:
             current.make_visited()
 
     return False
-
 
 def findPathDijkstra(start, end):
     count = 0
@@ -147,10 +156,13 @@ def findPathDijkstra(start, end):
     open_set_hash = {start}
     came_from = {}
     g = {}
+    f = {}
     for row in grid:
         for node in row:
             g[node] = float("inf")
+            f[node] = float("inf")
     g[start] = 0
+    f[start] = 0
 
     while not open_set.empty():
         for event in pygame.event.get():
@@ -168,20 +180,29 @@ def findPathDijkstra(start, end):
 
         for neighbour in current.neighbours:
             temp_g = g[current] + 1
+            if neighbour == end:
+                came_from[neighbour] = current
+                end.make_end()
+                reconstruct_path(came_from, end)
+                start.make_start()
+                return True
+
+                break
             if temp_g < g[neighbour]:
                 came_from[neighbour] = current
                 g[neighbour] = temp_g
+                f[neighbour] = temp_g
                 if neighbour not in open_set_hash:
                     count += 1
-                    open_set.put((g[neighbour], count, neighbour))
+                    open_set.put((f[neighbour], count, neighbour))
                     open_set_hash.add(neighbour)
-                    
+                    neighbour.make_unvisited()
+
         draw()
         if current != start:
             current.make_visited()
 
     return False
-
 
 def make_grid():
     space = width // rows
@@ -288,19 +309,21 @@ def main():
                             for node in row:
                                 node.reset()
 
-            elif pygame.mouse.get_pressed()[2]:  # right click on a node
+
+            elif pygame.mouse.get_pressed()[2]:  # right button
                 pos = pygame.mouse.get_pos()
                 y, x = pos
                 space = width // rows
                 row = y // space
                 col = x // space
                 node = grid[row][col]
-                node.reset()                   # reset that node
+                node.reset()
                 if node == start:
                     start = None
                 elif node == end:
                     end = None
 
     pygame.quit()
+
 
 main()
